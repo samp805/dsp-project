@@ -1,5 +1,6 @@
 from PIL import Image, ImageOps
 import os, wave, math, array, argparse, sys, timeit
+from functools import wraps
 
 # constants
 MIN_FREQ = 200
@@ -7,6 +8,14 @@ MAX_FREQ = 20000
 Fs = 44100
 PIXELS_PS = 30
 
+def memoize(func):
+    cache = dict()
+    @wraps(func)
+    def wrap(*args):
+        if args not in cache:
+            cache[args] = func(*args)
+        return cache[args]
+    return wrap
 
 def parser():
     parser = argparse.ArgumentParser()
@@ -50,7 +59,8 @@ def get_input_image(inpt):
     return result.convert('L')
 
 def convert(inpt, output):
-    text_image = get_input_image(inpt)
+    text_image = ImageOps.invert(get_input_image(inpt))
+    # text_image = get_input_image(inpt)
 
     output = wave.open(output, 'w')
     output.setparams((1, 2, Fs, 0, 'NONE', 'not compressed'))
@@ -68,7 +78,17 @@ def convert(inpt, output):
             yinv = text_image.size[1] - y - 1
             ampl = text_image.getpixel((x,y))
             if (ampl > 0):
-                row.append( genwave(yinv * interval + MIN_FREQ, ampl, frames_pp, Fs) )
+                row.append(
+                    genwave(yinv * interval + MIN_FREQ,
+                            0.7*ampl,
+                            frames_pp)
+                )
+            else:
+                row.append(
+                    genwave(yinv * interval + MIN_FREQ,
+                            10,
+                            frames_pp)
+                )
 
         for i in xrange(frames_pp):
             for j in row:
@@ -78,9 +98,9 @@ def convert(inpt, output):
                     data.insert(i + x * frames_pp, j[i])
                 except(OverflowError):
                     if j[i] > 0:
-                      data[i + x * frames_pp] = 32767
+                        data[i + x * frames_pp] = 32767
                     else:
-                      data[i + x * frames_pp] = -32768
+                        data[i + x * frames_pp] = -32768
 
         sys.stdout.write("Conversion progress: %d%%   \r" % (float(x) / text_image.size[0]*100) )
         sys.stdout.flush()
@@ -93,7 +113,8 @@ def convert(inpt, output):
     print("Conversion progress: 100%")
     print("Success. Completed in %d seconds." % int(tms-tm))
 
-def genwave(f, ampl, samples, Fs):
+@memoize
+def genwave(f, ampl, samples):
     cycles = samples * f / Fs
     a = list()
     for i in xrange(samples):
