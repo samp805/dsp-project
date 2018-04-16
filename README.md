@@ -3,7 +3,7 @@ Alt-H1
 Tool to hide text in a wavfile's spectrogram.
 Dependency: PIL (Python Imaging Library)
 
-# H1 How to use:
+# How to use:
 1. Clone this repository.
 2. Make sure you have PIL (Python Imaging Library) installed.
 3. Run something like the example below  
