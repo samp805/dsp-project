@@ -80,7 +80,7 @@ def convert(inpt, output):
             if (ampl > 0):
                 row.append(
                     genwave(yinv * interval + MIN_FREQ,
-                            0.7*ampl,
+                            ampl,
                             frames_pp)
                 )
             else:
