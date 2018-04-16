@@ -169,6 +169,8 @@ def get_char_filename(char):
         return os.path.join(folder, 'less_than' + suffix)
     elif char == '-':
         return os.path.join(folder, 'minus' + suffix)
+    elif char == '|':
+        return os.path.join(folder, 'or' + suffix)
     elif char == '(':
         return os.path.join(folder, 'parentheses_start' + suffix)
     elif char == ')':
