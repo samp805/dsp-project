@@ -7,7 +7,7 @@ import numpy as np
 MIN_FREQ = 200
 MAX_FREQ = 20000
 Fs = 44100 # samples/second
-PIXELS_PS = 30 # pixels/second
+PIXELS_PS = 40 # pixels/second
 SAMPLES_PP = Fs / PIXELS_PS # samples/pixel
 
 def memoize(func):
@@ -103,12 +103,12 @@ def convert(inpt, output):
 
 @memoize
 def genwave(f, ampl):
+    """returns a waveform corresponding to the pixel"""
     freq = float(f / PIXELS_PS)/float(SAMPLES_PP)
     window = make_hamming(SAMPLES_PP)
-    a = list()
-    for i in xrange(SAMPLES_PP):
-        x = float(ampl) * window[i] * math.sin(2 * math.pi * freq * i)
-        a.append(int(math.floor(x)))
+    ampl = float(ampl)
+    a = map(lambda n: int(math.floor(ampl*window[n]*math.sin(2*math.pi*freq*n))),
+            range(SAMPLES_PP))
     return a
 
 def make_hamming(N):
