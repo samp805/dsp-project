@@ -27,7 +27,7 @@ def parser():
                         help="Name of the output wav file. Default value: out.wav).")
     args = parser.parse_args()
 
-    if args.output is not None:
+    if args.output:
         output = args.output
     else:
         output = 'converted.wav'
@@ -83,6 +83,11 @@ def convert(inpt, output):
                     data[i + x * SAMPLES_PP] += j[i]
                 except(IndexError):
                     data.insert(i + x * SAMPLES_PP, j[i])
+                except(OverflowError):
+                    if j[i] > 0:
+                        data[i + x * SAMPLES_PP] = 32767
+                    else:
+                        data[i + x * SAMPLES_PP] = -32767
 
         sys.stdout.write("Conversion progress: %d%%   \r" % (float(x) / text_image.size[0]*100) )
         sys.stdout.flush()
