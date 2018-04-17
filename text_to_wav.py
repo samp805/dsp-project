@@ -5,9 +5,9 @@ from functools import wraps
 # constants
 MIN_FREQ = 200
 MAX_FREQ = 20000
-Fs = 44100
-PIXELS_PS = 30
-FRAMES_PP = Fs / PIXELS_PS
+Fs = 44100 # samples/second
+PIXELS_PS = 30 # pixels/second
+SAMPLES_PP = Fs / PIXELS_PS # samples/pixel
 
 def memoize(func):
     cache = dict()
@@ -60,45 +60,29 @@ def get_input_image(inpt):
     return result.convert('L')
 
 def convert(inpt, output):
-    text_image = ImageOps.invert(get_input_image(inpt))
-    # text_image = get_input_image(inpt)
-
     output = wave.open(output, 'w')
     output.setparams((1, 2, Fs, 0, 'NONE', 'not compressed'))
 
+    text_image = ImageOps.invert(get_input_image(inpt))
     interval = (MAX_FREQ - MIN_FREQ) / text_image.size[1]
 
-    data = array.array('h')
-
     tm = timeit.default_timer()
-
+    data = array.array('h')
     for x in xrange(text_image.size[0]):
         row = list()
         for y in xrange(text_image.size[1]):
-            yinv = text_image.size[1] - y - 1
-            ampl = text_image.getpixel((x,y))
-            if (ampl > 0):
-                row.append(
-                    genwave(yinv * interval + MIN_FREQ,
-                            ampl)
-                )
+            freq = (text_image.size[1] - y - 1) * interval + MIN_FREQ
+            if (text_image.getpixel((x,y)) > 0):
+                row.append(genwave(freq, 500))
             else:
-                row.append(
-                    genwave(yinv * interval + MIN_FREQ,
-                            10)
-                )
+                row.append(genwave(freq, 10))
 
-        for i in xrange(FRAMES_PP):
+        for i in xrange(SAMPLES_PP):
             for j in row:
                 try:
-                    data[i + x * FRAMES_PP] += j[i]
+                    data[i + x * SAMPLES_PP] += j[i]
                 except(IndexError):
-                    data.insert(i + x * FRAMES_PP, j[i])
-                except(OverflowError):
-                    if j[i] > 0:
-                        data[i + x * FRAMES_PP] = 32767
-                    else:
-                        data[i + x * FRAMES_PP] = -32768
+                    data.insert(i + x * SAMPLES_PP, j[i])
 
         sys.stdout.write("Conversion progress: %d%%   \r" % (float(x) / text_image.size[0]*100) )
         sys.stdout.flush()
@@ -113,10 +97,10 @@ def convert(inpt, output):
 
 @memoize
 def genwave(f, ampl):
-    cycles = float(f / PIXELS_PS) # FRAMES_PP = Fs/PIXELS_PS
+    freq = float(f / PIXELS_PS)/float(SAMPLES_PP)
     a = list()
-    for i in xrange(FRAMES_PP):
-        x = float(ampl)*math.sin(cycles*2*math.pi*i/float(FRAMES_PP))
+    for i in xrange(SAMPLES_PP):
+        x = float(ampl) * math.sin(2 * math.pi * freq * i)
         a.append(int(math.floor(x)))
     return a
 
