@@ -1,6 +1,5 @@
-Alt-H1
-======
 Tool to hide text in a wavfile's spectrogram.  
+======
 Dependency: PIL (Python Imaging Library)  
 Forked [Spectrology](https://github.com/solusipse/spectrology) and modified
 it to only use text input.
