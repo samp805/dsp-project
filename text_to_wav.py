@@ -7,6 +7,7 @@ MIN_FREQ = 200
 MAX_FREQ = 20000
 Fs = 44100
 PIXELS_PS = 30
+FRAMES_PP = Fs / PIXELS_PS
 
 def memoize(func):
     cache = dict()
@@ -67,7 +68,6 @@ def convert(inpt, output):
 
     interval = (MAX_FREQ - MIN_FREQ) / text_image.size[1]
 
-    frames_pp = Fs / PIXELS_PS
     data = array.array('h')
 
     tm = timeit.default_timer()
@@ -80,27 +80,25 @@ def convert(inpt, output):
             if (ampl > 0):
                 row.append(
                     genwave(yinv * interval + MIN_FREQ,
-                            ampl,
-                            frames_pp)
+                            ampl)
                 )
             else:
                 row.append(
                     genwave(yinv * interval + MIN_FREQ,
-                            10,
-                            frames_pp)
+                            10)
                 )
 
-        for i in xrange(frames_pp):
+        for i in xrange(FRAMES_PP):
             for j in row:
                 try:
-                    data[i + x * frames_pp] += j[i]
+                    data[i + x * FRAMES_PP] += j[i]
                 except(IndexError):
-                    data.insert(i + x * frames_pp, j[i])
+                    data.insert(i + x * FRAMES_PP, j[i])
                 except(OverflowError):
                     if j[i] > 0:
-                        data[i + x * frames_pp] = 32767
+                        data[i + x * FRAMES_PP] = 32767
                     else:
-                        data[i + x * frames_pp] = -32768
+                        data[i + x * FRAMES_PP] = -32768
 
         sys.stdout.write("Conversion progress: %d%%   \r" % (float(x) / text_image.size[0]*100) )
         sys.stdout.flush()
@@ -114,11 +112,11 @@ def convert(inpt, output):
     print("Success. Completed in %d seconds." % int(tms-tm))
 
 @memoize
-def genwave(f, ampl, samples):
-    cycles = samples * f / Fs
+def genwave(f, ampl):
+    cycles = float(f / PIXELS_PS) # FRAMES_PP = Fs/PIXELS_PS
     a = list()
-    for i in xrange(samples):
-        x = math.sin(float(cycles) * 2 * math.pi * i / float(samples)) * float(ampl)
+    for i in xrange(FRAMES_PP):
+        x = float(ampl)*math.sin(cycles*2*math.pi*i/float(FRAMES_PP))
         a.append(int(math.floor(x)))
     return a
 
