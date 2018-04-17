@@ -1,6 +1,7 @@
 from PIL import Image, ImageOps
 import os, wave, math, array, argparse, sys, timeit
 from functools import wraps
+import numpy as np
 
 # constants
 MIN_FREQ = 200
@@ -103,11 +104,17 @@ def convert(inpt, output):
 @memoize
 def genwave(f, ampl):
     freq = float(f / PIXELS_PS)/float(SAMPLES_PP)
+    window = make_hamming(SAMPLES_PP)
     a = list()
     for i in xrange(SAMPLES_PP):
-        x = float(ampl) * math.sin(2 * math.pi * freq * i)
+        x = float(ampl) * window[i] * math.sin(2 * math.pi * freq * i)
         a.append(int(math.floor(x)))
     return a
+
+def make_hamming(N):
+    """returns a length N hamming window"""
+    return map(lambda x: 0.54 - 0.46 * math.cos(2*math.pi*x/(N-1)),
+               range(N))
 
 def get_char_filename(char):
     folder = os.path.join(os.getcwd(), 'characters')
