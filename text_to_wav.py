@@ -1,7 +1,6 @@
 from PIL import Image, ImageOps
 import os, wave, math, array, argparse, sys, timeit
 from functools import wraps
-import numpy as np
 
 # constants
 MIN_FREQ = 200
@@ -10,22 +9,13 @@ Fs = 44100 # samples/second
 PIXELS_PS = 40 # pixels/second
 SAMPLES_PP = Fs / PIXELS_PS # samples/pixel
 
-def memoize(func):
-    cache = dict()
-    @wraps(func)
-    def wrap(*args):
-        if args not in cache:
-            cache[args] = func(*args)
-        return cache[args]
-    return wrap
-
 def parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("input",
                         help="Text to be converted")
     parser.add_argument("-o",
                         "--output",
-                        help="Name of the output wav file. Default value: out.wav).")
+                        help="Name of the output wav file. Default value: converted.wav")
     args = parser.parse_args()
 
     if args.output:
@@ -100,6 +90,15 @@ def convert(inpt, output):
 
     print("Conversion progress: 100%")
     print("Success. Completed in %d seconds." % int(tms-tm))
+
+def memoize(func):
+    cache = dict()
+    @wraps(func)
+    def wrap(*args):
+        if args not in cache:
+            cache[args] = func(*args)
+        return cache[args]
+    return wrap
 
 @memoize
 def genwave(f, ampl):
